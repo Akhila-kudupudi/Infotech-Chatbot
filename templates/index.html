@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InfoTechnology Chatbot</title>
+    <style>
+        /* Basic styling for the page */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: url('https://du993ylnpbddg.cloudfront.net/Media/IB_IntroVideo/InfoBridge_Intro_Video_Thumbnail.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Styling for main header */
+        .main-heading {
+            font-size: 50px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.7); 
+        }
+        .main-heading a {
+            color: #B22222;
+            text-decoration: none;
+        }
+        .main-heading a:hover {
+            color: #1E90FF;
+        }
+
+        /* Chatbot icon styling */
+        .chatbot-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #87CEEB;
+            color: white;
+            font-size: 24px;
+            padding: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Chat window styling */
+        .chat-window {
+            display: none;
+            position: fixed;
+            bottom: 80px;
+            right: 30px;
+            width: 400px;
+            height: 600px;
+            background-color: white;
+            border: 2px solid #4682B4;
+            border-radius: 10px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Chat header */
+        .chat-header {
+            background-color: #4682B4;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Chat body */
+        .chat-body {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        /* Chat input area */
+        .chat-input {
+            border-top: 1px solid #ddd;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Chat input box */
+        .chat-input input {
+            flex: 1;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        /* Send button */
+        .chat-input button {
+            background-color: #000080;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin-left: 5px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main heading for InfoBridge -->
+    <div class="main-heading">
+        <a href="https://infotechnology.fhwa.dot.gov/bridge/" target="_blank">InfoTechnology</a>
+    </div>
+    <!-- Chatbot icon -->
+    <div class="chatbot-icon" onclick="toggleChat()">🤖</div>
+
+    <!-- Chat window -->
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header">InfoTech Assistant</div>
+        <div class="chat-body" id="chatBody">
+            <!-- Chat messages will go here -->
+            <p><em>Hi! How can I help you today?</em></p>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Type your message here...">
+            <button onclick="sendMessage()"> ➤ </button>
+        </div>
+        <!-- Button to trigger re-scraping -->
+        <button onclick="triggerRescraping()" style="margin: 10px;">Re-scrape Data</button>
+    </div>
+
+    <!-- JavaScript to handle chat window toggle, send message, and trigger re-scraping -->
+    <script>
+        // Function to toggle the chat window visibility
+        function toggleChat() {
+            const chatWindow = document.getElementById("chatWindow");
+            if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
+                chatWindow.style.display = "flex";
+            } else {
+                chatWindow.style.display = "none";
+            }
+        }
+
+        // Function to send a message to the backend API
+        async function sendMessage() {
+            const userInput = document.getElementById("userInput").value;
+            if (userInput.trim() === "") return;
+
+            const chatBody = document.getElementById("chatBody");
+            const userMessage = document.createElement("p");
+            userMessage.textContent = "You: " + userInput;
+            chatBody.appendChild(userMessage);
+
+            document.getElementById("userInput").value = "";
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            try {
+                const response = await fetch("http://127.0.0.1:5000/get_answer", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question: userInput })
+                });
+                const data = await response.json();
+
+                const botResponse = document.createElement("p");
+                botResponse.innerHTML = "<em>Bot: " + data.text + "</em>";  // Use innerHTML to render HTML content
+                chatBody.appendChild(botResponse);
+            } catch (error) {
+                console.error("Error:", error);
+                const botResponse = document.createElement("p");
+                botResponse.innerHTML = "<em>Bot: Sorry, there was an error processing your request.</em>";
+                chatBody.appendChild(botResponse);
+            }
+
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+
+        // Function to trigger re-scraping of data
+        async function triggerRescraping() {
+            try {
+                const response = await fetch("http://127.0.0.1:5000/scrape_data", {
+                    method: "POST"
+                });
+                const data = await response.json();
+                alert("Re-scraping triggered: " + data.status);
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error triggering re-scraping.");
+            }
+        }
+    </script>
+
+</body>
+</html>
